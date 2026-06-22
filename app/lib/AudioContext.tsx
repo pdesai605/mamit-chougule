@@ -3,10 +3,26 @@
 import {
   createContext,
   useContext,
-  useRef,
   useState,
   useCallback,
+  useEffect,
 } from "react";
+
+const AUDIO_SRC = "/audio/shivsena_song.mp3";
+
+let audioInstance: HTMLAudioElement | null = null;
+
+function getAudioInstance(): HTMLAudioElement | null {
+  if (typeof window === "undefined") return null;
+
+  if (!audioInstance) {
+    audioInstance = new Audio(AUDIO_SRC);
+    audioInstance.loop = true;
+    audioInstance.preload = "auto";
+  }
+
+  return audioInstance;
+}
 
 interface AudioContextValue {
   playing: boolean;
@@ -16,31 +32,44 @@ interface AudioContextValue {
 const AudioContext = createContext<AudioContextValue | null>(null);
 
 export function AudioProvider({ children }: { children: React.ReactNode }) {
-  const audioRef = useRef<HTMLAudioElement>(null);
   const [playing, setPlaying] = useState(false);
 
-  const toggle = useCallback(() => {
-    const audio = audioRef.current;
+  useEffect(() => {
+    const audio = getAudioInstance();
     if (!audio) return;
-    if (playing) {
-      audio.pause();
-      setPlaying(false);
+
+    const syncPlayingState = () => {
+      setPlaying(!audio.paused);
+    };
+
+    audio.addEventListener("play", syncPlayingState);
+    audio.addEventListener("pause", syncPlayingState);
+
+    syncPlayingState();
+
+    return () => {
+      audio.removeEventListener("play", syncPlayingState);
+      audio.removeEventListener("pause", syncPlayingState);
+    };
+  }, []);
+
+  const toggle = useCallback(async () => {
+    const audio = getAudioInstance();
+    if (!audio) return;
+
+    if (audio.paused) {
+      try {
+        await audio.play();
+      } catch {
+        setPlaying(false);
+      }
     } else {
-      audio.play().then(() => setPlaying(true)).catch(() => setPlaying(false));
+      audio.pause();
     }
-  }, [playing]);
+  }, []);
 
   return (
     <AudioContext.Provider value={{ playing, toggle }}>
-      <audio
-        ref={audioRef}
-        src="/audio/shivsena_song.mp3"
-        loop
-        preload="none"
-        onEnded={() => setPlaying(false)}
-        onPause={() => setPlaying(false)}
-        onPlay={() => setPlaying(true)}
-      />
       {children}
     </AudioContext.Provider>
   );

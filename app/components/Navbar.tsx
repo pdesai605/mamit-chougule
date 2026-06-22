@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useLanguage } from "../lib/LanguageContext";
 import { useAudio } from "../lib/AudioContext";
+import { MusicPlayingIcon, MusicMutedIcon } from "./MusicIcons";
 
 export default function Navbar() {
   const { t, lang, toggleLang } = useLanguage();
@@ -104,6 +105,7 @@ export default function Navbar() {
             onClick={toggleMusic}
             data-cursor="cta"
             aria-label={playing ? t.music.pause : t.music.play}
+            aria-pressed={playing}
             className={`flex items-center justify-center rounded-full border border-[var(--saffron)] transition-all duration-300 ${
               playing
                 ? "bg-[var(--saffron)] text-[var(--deep-ink)] music-pulse"
@@ -112,10 +114,23 @@ export default function Navbar() {
             style={{
               width: "clamp(2rem, 3.5vw, 2.25rem)",
               height: "clamp(2rem, 3.5vw, 2.25rem)",
-              fontSize: "clamp(0.75rem, 1.2vw, 0.875rem)",
             }}
           >
-            {playing ? "⏸" : "♪"}
+            {playing ? (
+              <MusicPlayingIcon
+                style={{
+                  width: "clamp(0.875rem, 1.5vw, 1rem)",
+                  height: "clamp(0.875rem, 1.5vw, 1rem)",
+                }}
+              />
+            ) : (
+              <MusicMutedIcon
+                style={{
+                  width: "clamp(0.875rem, 1.5vw, 1rem)",
+                  height: "clamp(0.875rem, 1.5vw, 1rem)",
+                }}
+              />
+            )}
           </button>
 
           <a
